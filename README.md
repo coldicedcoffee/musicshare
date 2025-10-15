@@ -2,6 +2,8 @@
 
 A real-time collaborative playlist application where multiple users can add, remove, and share songs together.
 
+🌐 **Deploy your own:** Follow [DEPLOY_CHECKLIST.md](DEPLOY_CHECKLIST.md) to host this online for FREE!
+
 ## Features
 
 - 🎵 **Real-time Updates**: Changes reflect instantly across all connected users
@@ -10,8 +12,6 @@ A real-time collaborative playlist application where multiple users can add, rem
 - 🗑️ **Remove Songs**: Delete individual songs from the playlist
 - 🔄 **Live User List**: See who's online in real-time
 - 📱 **Responsive Design**: Works on desktop and mobile devices
-- 📊 **Google Sheets Integration**: All songs are automatically saved to Google Sheets for persistence
-- ☁️ **Cloud Storage**: Your playlist persists even after server restarts
 
 ## Tech Stack
 
@@ -21,8 +21,6 @@ A real-time collaborative playlist application where multiple users can add, rem
 - **Socket.IO** - Real-time bidirectional communication
 - **CORS** - Cross-origin resource sharing
 - **UUID** - Unique identifier generation
-- **Google Sheets API** - Cloud data persistence
-- **dotenv** - Environment variable management
 
 ### Frontend
 - **HTML5/CSS3** - UI structure and styling
@@ -35,21 +33,31 @@ A real-time collaborative playlist application where multiple users can add, rem
 - Node.js (v14 or higher)
 - npm or yarn
 
-### Setup
+### Local Setup
 
-1. Navigate to the backend directory:
+1. Clone the repository:
+```bash
+git clone https://github.com/YOUR_USERNAME/musicshare.git
+cd musicshare
+```
+
+2. Navigate to the backend directory:
 ```bash
 cd backend
 ```
 
-2. Install dependencies:
+3. Install dependencies:
 ```bash
 npm install
 ```
 
-3. **Optional but Recommended**: Set up Google Sheets integration
-   - See [SETUP_GOOGLE_SHEETS.md](SETUP_GOOGLE_SHEETS.md) for detailed instructions
-   - Without this, the app works in memory-only mode (data lost on restart)
+### Deploy to Production
+
+See **[DEPLOY_CHECKLIST.md](DEPLOY_CHECKLIST.md)** for step-by-step deployment guide.
+
+Quick options:
+- **Backend:** [Render](https://render.com) (FREE)
+- **Frontend:** [Netlify](https://netlify.com) (FREE)
 
 ## Running the Application
 
