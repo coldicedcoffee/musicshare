@@ -343,7 +343,7 @@
         // Auto-detect server URL based on environment
         const serverUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === ''
             ? 'http://localhost:3000'
-            : window.location.origin;
+            : 'https://musicshare-4c4v.onrender.com';  // Your Render backend URL
         
         const socket = io(serverUrl, {
             transports: ['websocket', 'polling'],
