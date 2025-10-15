@@ -1,0 +1,9 @@
+node_modules/
+.env
+*.log
+.DS_Store
+package-lock.json
+
+# Google Sheets credentials - NEVER commit this!
+credentials.json
+backend/credentials.json

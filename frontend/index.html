@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MusicShare - Collaborative Playlist</title>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .user-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .user-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .user-input input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .user-input button {
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .user-input button:hover {
+            background: #5568d3;
+        }
+
+        .online-users {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .user-badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .add-song-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-grid input {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .form-grid input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .add-btn {
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .add-btn:hover {
+            background: #218838;
+        }
+
+        .add-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .playlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .playlist-header h2 {
+            color: #333;
+        }
+
+        .clear-btn {
+            padding: 10px 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .clear-btn:hover {
+            background: #c82333;
+        }
+
+        .playlist {
+            list-style: none;
+        }
+
+        .song-item {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .song-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .song-info {
+            flex: 1;
+        }
+
+        .song-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .song-artist {
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .song-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            color: #999;
+        }
+
+        .remove-btn {
+            padding: 8px 15px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: slideInRight 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 MusicShare</h1>
+        <p class="subtitle">Collaborative Playlist - Real-time Updates</p>
+
+        <div id="status" class="status disconnected">
+            Not connected
+        </div>
+
+        <div class="user-section">
+            <div class="user-input">
+                <input type="text" id="usernameInput" placeholder="Enter your name..." />
+                <button onclick="joinSession()">Join Session</button>
+            </div>
+            <div class="online-users">
+                <strong>Online Users:</strong>
+                <div id="userList"></div>
+            </div>
+        </div>
+
+        <div class="add-song-form">
+            <h3 style="margin-bottom: 15px;">Add Song to Playlist</h3>
+            <div class="form-grid">
+                <input type="text" id="songTitle" placeholder="Song Title *" />
+                <input type="text" id="songArtist" placeholder="Artist *" />
+                <input type="text" id="songAlbum" placeholder="Album (optional)" />
+                <input type="text" id="songDuration" placeholder="Duration (e.g., 3:45)" />
+            </div>
+            <button class="add-btn" onclick="addSong()" id="addSongBtn" disabled>
+                Add Song to Playlist
+            </button>
+        </div>
+
+        <div class="playlist-header">
+            <h2>Playlist (<span id="songCount">0</span> songs)</h2>
+            <button class="clear-btn" onclick="clearPlaylist()">Clear All</button>
+        </div>
+
+        <ul class="playlist" id="playlist">
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                </svg>
+                <h3>No songs yet!</h3>
+                <p>Be the first to add a song to the playlist</p>
+            </div>
+        </ul>
+    </div>
+
+    <script>
+        // Auto-detect server URL based on environment
+        const serverUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === ''
+            ? 'http://localhost:3000'
+            : window.location.origin;
+        
+        const socket = io(serverUrl, {
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 5
+        });
+        
+        let username = '';
+        let userId = '';
+
+        // Socket connection handlers
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            updateStatus(true);
+            userId = socket.id;
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+            updateStatus(false);
+        });
+
+        socket.on('initialPlaylist', (playlist) => {
+            console.log('Received initial playlist:', playlist);
+            renderPlaylist(playlist);
+        });
+
+        socket.on('playlistUpdated', (data) => {
+            console.log('Playlist updated:', data);
+            renderPlaylist(data.playlist);
+            
+            if (data.action === 'add') {
+                showNotification(`${data.song.addedBy} added "${data.song.title}"`);
+            } else if (data.action === 'remove') {
+                showNotification(`Song "${data.song.title}" removed`);
+            } else if (data.action === 'clear') {
+                showNotification('Playlist cleared');
+            }
+        });
+
+        socket.on('userListUpdated', (data) => {
+            console.log('User list updated:', data);
+            renderUserList(data.users);
+        });
+
+        function updateStatus(connected) {
+            const statusEl = document.getElementById('status');
+            if (connected) {
+                statusEl.textContent = `🟢 Connected to ${serverUrl}`;
+                statusEl.className = 'status connected';
+            } else {
+                statusEl.textContent = '🔴 Disconnected from server';
+                statusEl.className = 'status disconnected';
+            }
+        }
+
+        function joinSession() {
+            const usernameInput = document.getElementById('usernameInput');
+            username = usernameInput.value.trim();
+            
+            if (!username) {
+                alert('Please enter your name');
+                return;
+            }
+
+            socket.emit('userJoin', username);
+            document.getElementById('addSongBtn').disabled = false;
+            usernameInput.disabled = true;
+            showNotification(`Welcome, ${username}!`);
+        }
+
+        function renderUserList(users) {
+            const userListEl = document.getElementById('userList');
+            if (users.length === 0) {
+                userListEl.innerHTML = '<span style="color: #999;">No users online</span>';
+            } else {
+                userListEl.innerHTML = users.map(user => 
+                    `<span class="user-badge">${user.username}</span>`
+                ).join('');
+            }
+        }
+
+        function addSong() {
+            const title = document.getElementById('songTitle').value.trim();
+            const artist = document.getElementById('songArtist').value.trim();
+            const album = document.getElementById('songAlbum').value.trim();
+            const duration = document.getElementById('songDuration').value.trim();
+
+            if (!title || !artist) {
+                alert('Please enter at least song title and artist');
+                return;
+            }
+
+            const songData = {
+                title,
+                artist,
+                album,
+                duration,
+                addedBy: username
+            };
+
+            socket.emit('addSong', songData);
+
+            // Clear form
+            document.getElementById('songTitle').value = '';
+            document.getElementById('songArtist').value = '';
+            document.getElementById('songAlbum').value = '';
+            document.getElementById('songDuration').value = '';
+        }
+
+        function removeSong(songId) {
+            socket.emit('removeSong', songId);
+        }
+
+        async function clearPlaylist() {
+            if (!confirm('Are you sure you want to clear the entire playlist?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${serverUrl}/api/playlist`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                console.log('Playlist cleared:', data);
+            } catch (error) {
+                console.error('Error clearing playlist:', error);
+            }
+        }
+
+        function renderPlaylist(playlist) {
+            const playlistEl = document.getElementById('playlist');
+            const songCountEl = document.getElementById('songCount');
+            
+            songCountEl.textContent = playlist.length;
+
+            if (playlist.length === 0) {
+                playlistEl.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                        </svg>
+                        <h3>No songs yet!</h3>
+                        <p>Be the first to add a song to the playlist</p>
+                    </div>
+                `;
+                return;
+            }
+
+            playlistEl.innerHTML = playlist.map(song => `
+                <li class="song-item">
+                    <div class="song-info">
+                        <div class="song-title">${song.title}</div>
+                        <div class="song-artist">🎤 ${song.artist}</div>
+                        <div class="song-meta">
+                            ${song.album ? `<span>💿 ${song.album}</span>` : ''}
+                            ${song.duration ? `<span>⏱️ ${song.duration}</span>` : ''}
+                            <span>👤 Added by ${song.addedBy}</span>
+                            <span>📅 ${new Date(song.addedAt).toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <button class="remove-btn" onclick="removeSong('${song.id}')">Remove</button>
+                </li>
+            `).join('');
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Allow Enter key to submit forms
+        document.getElementById('usernameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinSession();
+        });
+
+        document.getElementById('songTitle').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addSong();
+        });
+    </script>
+</body>
+</html>
